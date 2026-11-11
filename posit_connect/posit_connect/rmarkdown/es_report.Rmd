@@ -1,0 +1,41 @@
+---
+pagetitle: "ES decision trees: sensitivity and pinch points"
+output:
+  html_document:
+    theme: null
+    highlight: null
+    mathjax: null
+    self_contained: true
+---
+
+```{r run-analysis, include = FALSE}
+# Runs the full framework each time Posit Connect renders this document:
+# validation tests -> sensitivity analysis -> report HTML.
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning = FALSE)
+
+# 1. Validation tests: stop the render if the editable models no longer
+#    match the original script code.
+#    (test_that() run outside a test runner stops with an error on failure)
+source("tests/test_all.R", local = new.env())
+
+# 2. Full analysis: writes outputs/ (CSVs, plots, results.json) and
+#    builds report/es_sensitivity_report.html
+source("run_all.R", local = new.env())
+
+# 3. Pull the styles and body out of the built report for embedding
+page <- rawToChar(readBin("report/es_sensitivity_report.html", "raw",
+                          file.info("report/es_sensitivity_report.html")$size))
+Encoding(page) <- "UTF-8"
+style <- regmatches(page, regexpr("<style>[\\s\\S]*?</style>", page, perl = TRUE))
+# (Google Fonts link left out so rendering needs no internet access; falls back to system fonts)
+body  <- sub("(?s).*<body>(.*)</body>.*", "\\1", page, perl = TRUE)
+```
+
+```{r report, results = "asis"}
+cat(style, body, sep = "\n")
+```
+
+<style>
+/* undo R Markdown's default page container so the report fills the page */
+.main-container { max-width: none !important; padding: 0 !important; margin: 0 !important; }
+</style>
